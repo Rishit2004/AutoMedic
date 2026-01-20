@@ -47,11 +47,25 @@ if not api_key:
     api_key = "missing-key-check-env-vars"
 
 # Initialize model with explicit config
-model = OpenAIModel(
-    model_name=model_name,
-    base_url=base_url,
-    api_key=api_key,
-)
+# Use a simple string for the model if parameters are standard, or fallback to object
+# BUT: to be safe on Vercel cold boot, we must ensure we don't crash if the key is 'missing-key...'
+# The OpenAIModel validation might be strict.
+
+try:
+    model = OpenAIModel(
+        model_name=model_name,
+        base_url=base_url,
+        api_key=api_key,
+    )
+except Exception as e:
+    print(f"Model init failed (likely invalid key): {e}")
+    # Fallback to a valid dummy model object to allow app boot
+    # This ensures the server starts, even if the agent will fail at runtime
+    model = OpenAIModel(
+        model_name="mock-model",
+        base_url="https://example.com",
+        api_key="mock-key"
+    )
 
 mechanic_agent = Agent(
     model=model,
