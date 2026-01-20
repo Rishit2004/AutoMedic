@@ -32,13 +32,23 @@ class CarContext(BaseModel):
 
 # --- Agent Setup ---
 
-# We use a standard model (e.g. gpt-4o or similar via OpenAI/OpenRouter)
-# Ensure OPENAI_API_KEY (or compatible based on base_url) is set.
-model_name = os.getenv("LLM_MODEL", "gpt-4o-mini") 
+from pydantic_ai.models.openai import OpenAIModel
+
+# We use OpenRouter via the OpenAI compatible interface
+# This avoids "Unknown model" errors by being explicit
+from pydantic_ai.models.openai import OpenAIModel
+
+# Check if we have the API key
+if not os.getenv("OPENAI_API_KEY"):
+    print("WARNING: OPENAI_API_KEY not found in environment")
+
+# We use OpenRouter via the OpenAI compatible interface
+# The openai client will automatically pick up OPENAI_BASE_URL and OPENAI_API_KEY from env
+model = OpenAIModel('anthropic/claude-3-haiku')
 
 mechanic_agent = Agent(
-    model=model_name,
-    result_type=DiagnosticResult,
+    model=model,
+    output_type=DiagnosticResult,
     system_prompt=(
         "You are AutoMedic, an expert automotive mechanic with 20 years of experience. "
         "Your goal is to diagnose car issues based on user-described symptoms. "
