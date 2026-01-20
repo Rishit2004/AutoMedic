@@ -8,12 +8,6 @@ from pathlib import Path
 
 # Import the agent and models
 # Note: In a real run, we need to ensure the import works (same dir)
-try:
-    from backend.agent import mechanic_agent, DiagnosticResult
-except ImportError:
-    # Safe fallback if running from root without package context
-    from agent import mechanic_agent, DiagnosticResult
-
 app = FastAPI(title="AutoMedic AI")
 
 # Enable CORS
@@ -26,15 +20,21 @@ app.add_middleware(
 )
 
 # Serve Static files (Frontend)
-# We assume 'static' is a sibling of 'backend' or relative to root
 static_path = Path(__file__).resolve().parent.parent / "static"
 if not static_path.exists():
-    # Fallback for different CWD
     static_path = Path("static")
 
 if static_path.exists():
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 
+class DiagnosticResult(BaseModel):
+    issue_title: str
+    severity_score: int
+    confidence_level: float
+    description: str
+    recommended_action: str
+    diy_possible: bool
+    estimated_cost_range_usd: str
 
 class DiagnosisRequest(BaseModel):
     symptoms: str
@@ -48,7 +48,13 @@ async def diagnose_car(request: DiagnosisRequest):
     """
     Run the mechanic agent to diagnose the issue.
     """
+    # Lazy import to prevent boot-time crashes if environment is unstable
     try:
+        try:
+            from backend.agent import mechanic_agent
+        except ImportError:
+            from agent import mechanic_agent
+            
         # Construct the user prompt
         prompt = (
             f"Car: {request.car_year} {request.car_make} {request.car_model} "
@@ -57,12 +63,10 @@ async def diagnose_car(request: DiagnosisRequest):
         )
         
         # Run the agent
-        # We assume OPENAI_API_KEY is set in environment
         result = await mechanic_agent.run(prompt)
         return result.data
         
     except Exception as e:
-        # Log the error (would use logfire in real app)
         print(f"Error running agent: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
