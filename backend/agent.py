@@ -44,7 +44,8 @@ if not os.getenv("OPENAI_API_KEY"):
 
 # We use OpenRouter via the OpenAI compatible interface
 # The openai client will automatically pick up OPENAI_BASE_URL and OPENAI_API_KEY from env
-model = OpenAIModel('anthropic/claude-3-haiku')
+# Using the free model from Google via OpenRouter
+model = OpenAIModel('google/gemini-2.0-flash-exp:free')
 
 mechanic_agent = Agent(
     model=model,
