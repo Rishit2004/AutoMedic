@@ -1,0 +1,17 @@
+# Ignore virtual environment
+venv/
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+# Environment variables
+.env
+# IDE / editor files
+.vscode/
+.idea/
+# Local artifacts
+.gemini/
+# OS files
+.DS_Store
+# Deployment guide (excluded from commit)
+DEPLOYMENT_STEPS.md

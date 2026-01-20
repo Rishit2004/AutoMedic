@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoMedic - AI Car Diagnostician</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js (Petite layout) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-field {
+            @apply w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-slate-900 text-white min-h-screen flex flex-col bg-[url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center bg-fixed bg-no-repeat">
+    <div class="absolute inset-0 bg-slate-900/90 z-0"></div>
+
+    <!-- Navbar -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wrench text-emerald-400 text-xl"></i>
+                    <span class="font-bold text-xl tracking-wide">Auto<span class="text-emerald-400">Medic</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 z-10 relative">
+        <div id="app" class="max-w-4xl mx-auto">
+            <!-- Hero -->
+            <div class="text-center mb-10">
+                <h1
+                    class="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">
+                    AI Car Diagnostic Agent
+                </h1>
+                <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+                    Describe symptoms. Get a professional instant diagnosis.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Data Entry Form -->
+                <div class="glass rounded-xl p-6 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 border-b border-slate-700 pb-2"><i
+                            class="fa-solid fa-car-side mr-2"></i>Vehicle Details</h2>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Year</label>
+                            <input type="number" v-model="form.year" placeholder="2018" class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Make</label>
+                            <input type="text" v-model="form.make" placeholder="Toyota" class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Model</label>
+                            <input type="text" v-model="form.model" placeholder="Corolla" class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Mileage</label>
+                            <input type="number" v-model="form.mileage" placeholder="50000" class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-slate-400 text-sm mb-1">Symptoms (Be specific)</label>
+                        <textarea v-model="form.symptoms" rows="4"
+                            placeholder="e.g. Squeaking noise when braking at high speeds..."
+                            class="input-field"></textarea>
+                    </div>
+
+                    <button @click="submitDiagnosis" :disabled="loading"
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span v-if="!loading">Run Diagnosis</span>
+                        <span v-else><i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...</span>
+                    </button>
+
+                    <p v-if="error" class="mt-4 text-red-400 text-sm text-center">{{ error }}</p>
+                </div>
+
+                <!-- Results Display -->
+                <div class="space-y-4">
+                    <!-- Instruction Card -->
+                    <div v-if="!result && !loading"
+                        class="glass rounded-xl p-8 text-center flex flex-col items-center justify-center h-full min-h-[300px]">
+                        <div class="text-slate-600 mb-4 text-6xl">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-300">Ready to Diagnose</h3>
+                        <p class="text-slate-500 mt-2">Enter vehicle details and symptoms to start the AI analysis.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div v-if="loading"
+                        class="glass rounded-xl p-8 text-center flex flex-col items-center justify-center h-full min-h-[300px]">
+                        <i class="fa-solid fa-gear fa-spin text-5xl text-emerald-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-white">Analyzing Engine Data...</h3>
+                        <p class="text-slate-400 mt-2">Comparing symptoms against 10M+ repair records.</p>
+                    </div>
+
+                    <!-- Result Card -->
+                    <div v-if="result"
+                        class="glass rounded-xl p-6 shadow-xl border-l-4 border-emerald-500 animate-fade-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span
+                                    class="bg-emerald-500/20 text-emerald-400 text-xs px-2 py-1 rounded uppercase tracking-wider font-bold">Diagnosis</span>
+                                <h2 class="text-2xl font-bold mt-1 text-white">{{ result.issue_title }}</h2>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-slate-400">Severity</div>
+                                <div class="text-2xl font-bold"
+                                    :class="{'text-red-500': result.severity_score > 7, 'text-yellow-500': result.severity_score > 4, 'text-green-500': result.severity_score <= 4}">
+                                    {{ result.severity_score }}/10
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-slate-300 leading-relaxed mb-6">
+                            {{ result.description }}
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <div class="text-xs text-slate-500 uppercase mb-1">Confidence</div>
+                                <div class="text-lg font-semibold text-white">{{ (result.confidence_level *
+                                    100).toFixed(0) }}%</div>
+                            </div>
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <div class="text-xs text-slate-500 uppercase mb-1">Est. Cost</div>
+                                <div class="text-lg font-semibold text-white">{{ result.estimated_cost_range_usd }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="font-semibold text-emerald-400 mb-2"><i
+                                    class="fa-solid fa-clipboard-check mr-2"></i>Recommended Action</h4>
+                            <p class="text-sm text-slate-300 bg-slate-800/50 p-3 rounded border-l-2 border-emerald-500">
+                                {{ result.recommended_action }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-sm text-slate-400">
+                            <i class="fa-solid"
+                                :class="result.diy_possible ? 'fa-check text-green-500' : 'fa-times text-red-500'"></i>
+                            <span>DIY Possible: {{ result.diy_possible ? 'Yes' : 'No' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
