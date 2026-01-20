@@ -36,16 +36,22 @@ from pydantic_ai.models.openai import OpenAIModel
 
 # We use OpenRouter via the OpenAI compatible interface
 # This avoids "Unknown model" errors by being explicit
-from pydantic_ai.models.openai import OpenAIModel
+# Check for API key logic
+api_key = os.getenv("OPENAI_API_KEY")
+base_url = os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
+model_name = os.getenv("LLM_MODEL", "google/gemini-2.0-flash-exp:free")
 
-# Check if we have the API key
-if not os.getenv("OPENAI_API_KEY"):
-    print("WARNING: OPENAI_API_KEY not found in environment")
+if not api_key:
+    # Fallback to dummy key to prevent app crash on boot (Vercel 500 debug)
+    print("CRITICAL WARNING: OPENAI_API_KEY is missing via os.getenv. Using dummy key for boot.")
+    api_key = "missing-key-check-env-vars"
 
-# We use OpenRouter via the OpenAI compatible interface
-# The openai client will automatically pick up OPENAI_BASE_URL and OPENAI_API_KEY from env
-# Using the free model from Google via OpenRouter
-model = OpenAIModel('google/gemini-2.0-flash-exp:free')
+# Initialize model with explicit config
+model = OpenAIModel(
+    model_name=model_name,
+    base_url=base_url,
+    api_key=api_key,
+)
 
 mechanic_agent = Agent(
     model=model,
